@@ -119,7 +119,7 @@ def command(desc, name=None, aliases=(), locking=True, read_only=False):
 
 def get_command_by_user_configured_alias(db, cmd):
     if (
-        not db.config.has_section('aliases') 
+        not db.config.has_section('aliases')
         or not db.config.has_option('aliases', cmd)
         ):
         return
@@ -238,7 +238,7 @@ def get_date_from_cli_string(option,  option_str, value, parser):
 # Commands
 
 
-@command("open the backend's interactive shell", aliases=('shell',), 
+@command("open the backend's interactive shell", aliases=('shell',),
         locking=False)
 def backend(db, args):
     parser = optparse.OptionParser(usage='''usage: %prog backend
@@ -551,7 +551,8 @@ of the available timesheets.')
                 entry e3
             where
                 e1.sheet = e3.sheet and
-                e3.start_time > strftime('%s', date('now'))
+                strftime('%s', datetime(e3.start_time, 'unixepoch', 'localtime')) > 
+                    strftime('%s', date('now', 'localtime'))
         ) as today,
         ifnull(sum(ifnull(e1.end_time, strftime('%s', 'now')) -
                    e1.start_time), 0) as total
@@ -695,9 +696,9 @@ def backdate(db, args):
             clock_out(db)
 
         sql = """
-            SELECT id 
+            SELECT id
             FROM entry
-            WHERE 
+            WHERE
                 sheet = ?
                 AND
                 end_time > ?
@@ -722,7 +723,7 @@ def backdate(db, args):
         sql = """
             UPDATE entry
             SET end_time = ?
-            WHERE 
+            WHERE
                 sheet = ?
                 AND
                 end_time > ?
@@ -1467,7 +1468,7 @@ def format_timebook(db, sheet, where, show_ids=False, summary=False):
     metadata_keys = db.fetchall()
     extra_count = len(metadata_keys)
     if show_ids:
-        extra_count = extra_count + 1 
+        extra_count = extra_count + 1
 
     table = []
     table_header = ['Day', 'Start      End', 'Duration']
