@@ -25,7 +25,7 @@ import logging
 import os.path
 import sys
 
-__author__ = 'Adam Coddington <me@adamcoddington.net>, Trevor Caira <trevor@caira.com>'
+__author__ = 'Adam Coddington <me@adamcoddington.net>, Trevor Caira <trevor@caira.com>, David Quiros <david@quiros.online>'
 __version__ = (3, 7, 5)
 
 def get_version():

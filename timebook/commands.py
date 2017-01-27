@@ -532,7 +532,7 @@ of the available timesheets.')
         print u'\n'.join(r[0] for r in db.fetchall())
         return
 
-    table = [[' Timesheet', 'Running', 'Today', 'Total time']]
+    table = [[' Timesheet', 'Running', 'Today', 'Weekly Total']]
     db.execute(u'''
     select
         e1.sheet as name,
@@ -551,11 +551,19 @@ of the available timesheets.')
                 entry e3
             where
                 e1.sheet = e3.sheet and
-                strftime('%s', datetime(e3.start_time, 'unixepoch', 'localtime')) > 
+                strftime('%s', datetime(e3.start_time, 'unixepoch', 'localtime')) >
                     strftime('%s', date('now', 'localtime'))
         ) as today,
-        ifnull(sum(ifnull(e1.end_time, strftime('%s', 'now')) -
-                   e1.start_time), 0) as total
+        (select
+            ifnull(sum(ifnull(e4.end_time, strftime('%s', 'now')) -
+                       e4.start_time), 0)
+            from
+                entry e4
+            where
+                e1.sheet = e4.sheet and
+                strftime('%W', date(e4.start_time, 'unixepoch', 'localtime')) =
+                    strftime('%W', date('now', 'localtime'))
+        ) as weekTotal
     from
         entry e1, meta
     where
@@ -564,18 +572,28 @@ of the available timesheets.')
     order by e1.sheet asc;
     ''')
     sheets = db.fetchall()
+    today_aggregate = 0
+    week_aggregate = 0
+
     if len(sheets) == 0:
         print u'(no sheets)'
         return
-    for (name, is_current, active, today, total) in sheets:
+    for (name, is_current, active, today, weekTotal) in sheets:
+        today_aggregate += today;
+        week_aggregate += weekTotal;
+
         cur_name = '%s%s' % ('*' if is_current else ' ', name)
         active = str(timedelta(seconds=active)) if active != 0 \
                                                 else '--'
         today = str(timedelta(seconds=today))
-        total_time = str(timedelta(seconds=total))
-        table.append([cur_name, active, today, total_time])
-    cmdutil.pprint_table(table)
+        week_total = cmdutil.timedelta_hms_display(timedelta(seconds=weekTotal))
+        table.append([cur_name, active, today, week_total])
 
+    cmdutil.pprint_table(table)
+    print '\n Totals:                   {0}   {1}\n'.format(
+        timedelta(seconds=today_aggregate),
+        cmdutil.timedelta_hms_display(timedelta(seconds=week_aggregate))
+    )
 
 @command('switch to a new timesheet', read_only=True)
 def switch(db, args):
